@@ -66,12 +66,9 @@ class MrpRequestRequest(models.Model):
         for vals in vals_list:
             if not vals.get('name', False) or vals['name'] == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('mrp.request') or _('New')
-            # if vals.get('state', 'draft') == 'draft':
-            #     vals['state'] = 'submitted'
         
         return super().create(vals_list)
-    
-    # 1. Buat field boolean penampung
+
     is_editable = fields.Boolean(
         string='Is Editable', 
         compute='_compute_is_editable'

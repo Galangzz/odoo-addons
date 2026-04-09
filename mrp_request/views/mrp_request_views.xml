@@ -45,10 +45,10 @@
             <list string="Manufacturing Request">
                 <field name="priority" optional="show" widget="priority" nolabel="1" />
                 <field name="name" />
-                <field name="requested_id" readonly="True" />
+                <field name="requested_id" readonly="True" widget="many2one_avatar_user"/>
                 <field name="company_id" readonly="True" optional="hide" />
                 <field name="date_assign" />
-                <field name="approver_id" optional="hide" />
+                <field name="approver_id" optional="hide" widget="many2one_avatar_user"/>
                 <field name="state"
                     decoration-muted="state =='draft'"
                     decoration-info="state == 'submitted'"
