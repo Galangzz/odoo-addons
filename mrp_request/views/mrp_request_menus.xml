@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="mrp_request_request_menu"
+        name="Manufacturing Request"
+        action="mrp_request_request_action"
+        parent="mrp.menu_mrp_manufacturing"
+        sequence="0"/>
+
+    <!-- <menuitem
+        id="mrp_request_report_menu"
+        name="Manufacturing Reporting"
+        action=""
+        parent="mrp.menu_mrp_reporting"
+        sequence="0"/> -->
+
+</odoo>

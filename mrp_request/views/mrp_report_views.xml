@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    
+    <record id="mrp_request_report_action" model="ir.actions.act_window">
+        <field name="name">Mrp Request Report</field>
+        <field name="res_model">mrp.request.report</field>
+        <field name="view_mode">list</field>
+        <field name="domain">[]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">Manufacturing Reporting</p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- SEARCH -->
+    <record id="mrp_request_request_view_search" model="ir.ui.view">
+        <field name="name">mrp.request.request.view.search</field>
+        <field name="model">mrp.request.request</field>
+        <field name="arch" type="xml">
+            <search string="Search Request">
+                <field name="name" />
+                <field name="requested_id" />
+                <field name="company_id" />
+                <field name="approver_id" />
+                <filter string="State" name="state"
+                    domain="[('state', 'in', ('draft', 'submitted', 'approved', 'on_work'))]" />
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION REQUEST -->
+    <record id="mrp_request_request_action" model="ir.actions.act_window">
+        <field name="name">Manufacturing Request</field>
+        <field name="res_model">mrp.request.request</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="search_view_id" ref="mrp_request_request_view_search" />
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_state': True}</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">Manufacturing Request</p>
+        </field>
+    </record>
+
+    <!-- LIST VIEW -->
+    <record id="mrp_request_request_view_list" model="ir.ui.view">
+        <field name="name">mrp.request.request.view.list</field>
+        <field name="model">mrp.request.request</field>
+        <field name="arch" type="xml">
+            <list string="Manufacturing Request">
+                <field name="priority" optional="show" widget="priority" nolabel="1" />
+                <field name="name" />
+                <field name="requested_id" readonly="True" />
+                <field name="company_id" readonly="True" optional="hide" />
+                <field name="date_assign" />
+                <field name="approver_id" optional="hide" />
+                <field name="state"
+                    decoration-muted="state =='draft'"
+                    decoration-info="state == 'submitted'"
+                    decoration-success="state in ('approved', 'done')"
+                    decoration-danger="state in ('rejected', 'cancelled')"
+                    decoration-bf="state in ('done', 'cancelled')"
+                    decoration-warning="state =='on_work'"
+                    optional="show" widget="badge" class="text-dark" />
+            </list>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="mrp_request_request_view_form" model="ir.ui.view">
+        <field name="name">mrp.request.request.view.form</field>
+        <field name="model">mrp.request.request</field>
+        <field name="arch" type="xml">
+
+            <form string="Manufacturing Request">
+                <header>
+
+                    <button string="Confirm" name="action_confirm" type="object"
+                        class="oe_highlight" invisible="state != 'draft' or not is_editable"
+                        data-hotkey="g" />
+
+                    <div class="d-flex align-items-center gap-1"
+                        invisible="state in ('draft', 'done', 'cancelled', 'on_work')"
+                        groups="mrp.group_mrp_manager">
+                        <button string="Approve" name="action_approve" type="object"
+                            class="btn-primary" invisible="state in ('approved', 'rejected')" />
+                        <button string="Reject" name="action_reject" type="object"
+                            class="btn-secondary" invisible="state == 'rejected'"
+                            confirm="Are you sure to reject this request?&#10;Rejected requests cannot be reprocessed
+                            "
+                        />
+                    </div>
+                    <button string="Process All" name="action_process_all_order" type="object"
+                        class="btn-dark" groups="mrp.group_mrp_manager"
+                        invisible="not show_process_all" />
+                    <button string="Cancel" name="action_cancel" type="object" class="btn-secondary"
+                        invisible="state != 'submitted' or not is_editable" />
+
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,done"
+                        invisible="state == 'rejected'" />
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,submitted,rejected" invisible="state != 'rejected'" />
+                </header>
+                <sheet>
+                    <h1>
+                        <field name="priority" widget="priority" class="me-3" />
+                        <field name="name" string="Manufacturing Request" />
+                    </h1>
+                    <group>
+
+                        <group>
+                            <field name="requested_id" readonly="True" />
+                            <field name="company_id" readonly="True" />
+                            <field name="date_assign" readonly="state != 'draft' or not is_editable" />
+                            <field name="active" groups="mrp.group_mrp_manager" />
+                        </group>
+                        <group name="approve" invisible="not approval_id">
+                            <field name="approver_id" readonly="1"
+                                invisible="approval_state == 'pending'" />
+
+                            <field name="approval_state"
+                                decoration-success="approval_state == 'approved'"
+                                decoration-danger="approval_state == 'rejected'"
+                                decoration-warning="approval_state == 'pending'"
+                                decoration-bf="approval_state"
+                                widget="selection_badge"
+                            />
+                            <field name="approve_date" readonly="True" invisible="not approve_date" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="group_order_request_product" string="Order Line">
+                            <field name="line_ids"
+                                readonly="not state in ('draft', 'submitted') or not is_editable">
+                                <list editable="bottom">
+                                    <control>
+                                        <create string="Add Line" />
+                                        <button name="action_add_request_from_catalog_raw"
+                                        string="Catalog" type="object" class="px-4 btn-link"
+                                        context="{'order_id': parent.id}"/>
+                                    </control>
+                                    <field name="product_id"
+                                        options="{'no_create': true, 'no_open': true}" />
+                                    <field name="product_qty" />
+                                    <field name="production_id" invisible="not production_id"
+                                        column_invisible="True" />
+                                    <field name="state"
+                                        invisible="not state"
+                                        column_invisible="not parent.state in ('approved', 'on_work') "
+                                        widget="badge"
+                                        decoration-success="state in ('confirmed', 'done')"
+                                        decoration-muted="state =='draft'"
+                                        decoration-info="state =='progress'"
+                                        decoration-primary="state == 'to_close'"
+                                        decoration-bf="state == 'done'"
+                                    />
+                                    <field name="schedule_date" invisible="not schedule_date"
+                                        column_invisible="not parent.state in ('approved', 'on_work') " />
+                                    <field name="product_uom_id"
+                                        options="{'no_create': true, 'no_open': true}" />
+                                    <button string="Process" name="process_single_request"
+                                        type="object" class="btn-success"
+                                        invisible="not parent.state in ('approved', 'on_work') or state"
+                                        groups="mrp.group_mrp_manager" />
+                                </list>
+                            </field>
+                        </page>
+                        <page name="group_additonal_info" string="Additional">
+                            <group>
+
+                                <field name="note" readonly="state != 'draft' or not is_editable" />
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="mrp_request_request_view_kanban" model="ir.ui.view">
+        <field name="name">mrp.request.request.view.kanban</field>
+        <field name="model">mrp.request.request</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" sample="1" default_group_by="state" quick_create="False">
+                <field name="priority" />
+                <field name="name" />
+                <field name="state" />
+                <field name="requested_id" readonly="True" />
+                <field name="company_id" readonly="True" optional="hide" />
+                <field name="date_assign" />
+                <field name="approver_id" optional="hide" />
+                <templates>
+                    <t t-name="card">
+                        <div class="row mb4">
+                            <div class="col-6">
+                                <div class="d-flex gap-2 align-items-center">
+                                    <field name="priority" optional="show" widget="priority"
+                                        nolabel="1" />
+                                    <field name="name" class="fw-bold" />
+                                </div>
+                                <field name="requested_id" readonly="True" />
+                                <!-- <field name="company_id" readonly="True" optional="hide" />
+                                <field name="date_assign" /> -->
+                            </div>
+                            <div
+                                class="col-6 d-flex flex-column align-items-end justify-content-start">
+                                <div>
+                                    <i class="fa fw-bold" aria-label="state" role="img"
+                                        title="state" />
+                                    <field name="state"
+                                        decoration-muted="state =='draft'"
+                                        decoration-info="state == 'submitted'"
+                                        decoration-success="state in ('approved', 'done')"
+                                        decoration-danger="state in ('rejected', 'cancelled')"
+                                        decoration-bf="state in ('done', 'cancelled')"
+                                        decoration-warning="state =='on_work'"
+                                        optional="show" widget="badge" class="fw-bold" />
+                                </div>
+
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+
+</odoo>

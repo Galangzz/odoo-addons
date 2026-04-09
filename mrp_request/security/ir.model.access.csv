@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mrp_request_request_admin,mrp_request.request_admin,model_mrp_request_request,mrp.group_mrp_manager,1,1,1,1
+access_mrp_request_request_user,mrp_request.request_user,model_mrp_request_request,mrp.group_mrp_user,1,1,1,0
+access_mrp_request_approval_admin,mrp_request.approval_admin,model_mrp_request_approval,mrp.group_mrp_manager,1,1,1,1
+access_mrp_request_approval_user,mrp_request.approval_user,model_mrp_request_approval,mrp.group_mrp_user,1,0,1,0
+access_mrp_request_line_admin,mrp_request.line_admin,model_mrp_request_line,mrp.group_mrp_manager,1,1,1,1
+access_mrp_request_line_user,mrp_request.line_user,model_mrp_request_line,mrp.group_mrp_user,1,1,1,1
