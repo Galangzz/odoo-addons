@@ -8,7 +8,15 @@ class MrpRequestLine(models.Model):
     _name = 'mrp.request.line'
     _description = 'MRP Request Line'
     
-    request_id = fields.Many2one('mrp.request.request', string='Request', ondelete='cascade', required=True)
+    request_id = fields.Many2one('mrp.request.request', store=True, string='Request', ondelete='cascade', required=True)
+    
+    request_name = fields.Char('Reference', related='request_id.name')
+    request_date_assign = fields.Datetime('Assign Date', related='request_id.date_assign')
+
+    request_approver_id  = fields.Many2one('res.users', string='Approver', related='request_id.approver_id', store=True)
+    request_approve_date = fields.Datetime('Approve Date', related='request_id.approve_date', store=True)
+    request_state = fields.Selection(related='request_id.state', store=True)
+    
     product_id = fields.Many2one(
         'product.product', 
         string='Product', 
@@ -63,20 +71,6 @@ class MrpRequestLine(models.Model):
     def action_add_request_from_catalog_raw(self):
         mo = self.env['mrp.request.request'].browse(self.env.context.get('order_id'))
         return mo.with_context(child_field='line_ids').action_add_from_catalog()
-    
-    # def _get_product_catalog_lines_data(self, parent_record=False, **kwargs):
-    #     if not (parent_record and self):
-    #         return {
-    #             'quantity': 0,
-    #         }
-    #     self.product_id.ensure_one()
-    #     return {
-    #         line.product_id.id: {
-    #             'quantity': line.product_qty,
-    #             'price': line.product_id.list_price, # Tambahkan ini (wajib ada meskipun 0)
-    #             'read_only': parent_record.state not in ['draft', 'submitted'], # Bonus: kunci otomatis jika bukan draft
-    #         } for line in parent_record.line_ids # Sesuaikan dengan nama field o2m di header
-    #     }
         
     def _get_product_catalog_lines_data(self, parent_record=False, **kwargs):
         if not (parent_record and self):

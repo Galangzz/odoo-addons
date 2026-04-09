@@ -24,6 +24,7 @@
         'security/ir.model.access.csv',
         'data/mrp_request_sequence.xml',
         'views/mrp_request_views.xml',
+        'views/mrp_report_views.xml',
         'views/mrp_request_menus.xml',
     ],
     'installable': True,

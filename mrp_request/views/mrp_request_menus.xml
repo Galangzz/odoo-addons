@@ -8,11 +8,11 @@
         parent="mrp.menu_mrp_manufacturing"
         sequence="0"/>
 
-    <!-- <menuitem
+    <menuitem
         id="mrp_request_report_menu"
         name="Manufacturing Reporting"
-        action=""
+        action="mrp_request_report_action"
         parent="mrp.menu_mrp_reporting"
-        sequence="0"/> -->
+        sequence="0"/>
 
 </odoo>
