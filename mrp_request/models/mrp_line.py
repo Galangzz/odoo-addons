@@ -27,9 +27,13 @@ class MrpRequestLine(models.Model):
     product_tmpl_id = fields.Many2one('product.template', 'Product Template', related='product_id.product_tmpl_id')
     product_uom_id = fields.Many2one('uom.uom', string='Unit', related='product_tmpl_id.uom_id', store=True)
     product_qty = fields.Float('Quantity to Order', required=True, digits='Product Unit', default=1, readonly=False, copy=True)
+    
+    # ??!!?
     production_id = fields.Many2one('mrp.production', string='Orders', ondelete='cascade', store=True, copy=False, readonly=True)
     schedule_date = fields.Datetime('Schedule Date', related='production_id.date_start', readonly=True, copy=False)
     state = fields.Selection(related='production_id.state', store=True)
+    
+    
     product_uom_qty = fields.Float(string='Total Quantity', compute='_compute_product_uom_qty', store=True)
     
     product_uom = fields.Many2one(
@@ -61,7 +65,8 @@ class MrpRequestLine(models.Model):
                     'product_qty': line.product_qty,
                     'product_uom_id': line.product_uom_id.id,
                     'date_start': fields.Datetime.now(),
-                    'origin': line.request_id.name
+                    'origin': line.request_id.name,
+                    'request_id': line.request_id.id,
                 })
             _logger.info("Product name is %s", line.product_id.name)
         return True

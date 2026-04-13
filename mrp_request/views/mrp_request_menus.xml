@@ -11,7 +11,7 @@
     <menuitem
         id="mrp_request_report_menu"
         name="Manufacturing Reporting"
-        action="mrp_request_report_action"
+        action="mrp_request_reporting_action"
         parent="mrp.menu_mrp_reporting"
         sequence="0"/>
 

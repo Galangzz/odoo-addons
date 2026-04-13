@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- SEARCH  -->
-    <record id="mrp_request_line_view_search" model="ir.ui.view">
-        <field name="name">mrp.request.line.view.search</field>
-        <field name="model">mrp.request.line</field>
+    <record id="mrp_production_reporting_view_search" model="ir.ui.view">
+        <field name="name">mrp.production.view.search</field>
+        <field name="model">mrp.production</field>
         <field name="arch" type="xml">
             <search string="Search Reporting">
                 <field name="product_id" />
                 <field name="request_approver_id" />
-                <group >
-                    <filter name="r_state" string="Request State"
-                        context="{'group_by': 'request_state'}" />
+                <group>
+                    <filter name="r_state" string="State"
+                        context="{'group_by': 'state'}" />
                 </group>
             </search>
         </field>
@@ -18,11 +18,11 @@
 
 
     <!-- ACTION REPORT -->
-    <record id="mrp_request_report_action" model="ir.actions.act_window">
+    <record id="mrp_request_reporting_action" model="ir.actions.act_window">
         <field name="name">Mrp Request Report</field>
-        <field name="res_model">mrp.request.line</field>
-        <field name="view_mode">list</field>
-        <field name="search_view_id" ref="mrp_request_line_view_search" />
+        <field name="res_model">mrp.production</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="mrp_production_reporting_view_search" />
         <field name="domain">[]</field>
         <field name="context">{'search_default_r_state': True}</field>
         <field name="help" type="html">
@@ -33,9 +33,9 @@
 
 
     <!-- LIST VIEW -->
-    <record id="mrp_request_line_reporting_view_list" model="ir.ui.view">
-        <field name="name">mrp.request.request.view.list</field>
-        <field name="model">mrp.request.line</field>
+    <record id="mrp_reporting_view_list" model="ir.ui.view">
+        <field name="name">mrp.production.view.list</field>
+        <field name="model">mrp.production</field>
         <field name="arch" type="xml">
             <list string="Manufacturing Reporting" create="0" edit="0" delete="0">
                 <field name="request_id" widget="many2one" options="{'no_open': False}"
@@ -43,31 +43,28 @@
                 <field name="request_date_assign" />
                 <field name="request_approver_id" />
                 <field name="request_approve_date" />
-                <field name="request_state"
-                    decoration-muted="request_state =='draft'"
-                    decoration-info="request_state == 'submitted'"
-                    decoration-success="request_state in ('approved', 'done')"
-                    decoration-danger="request_state in ('rejected', 'cancelled')"
-                    decoration-bf="request_state in ('done', 'cancelled')"
-                    decoration-warning="request_state =='on_work'"
+                <field name="name"
+                string="Order ID" />
+                <field name="product_id" />
+                <field name="state"
+                    decoration-muted="state =='draft'"
+                    decoration-info="state == 'progress'"
+                    decoration-success="state in ('confirmed', 'done')"
+                    decoration-danger="state == 'cancel'"
+                    decoration-bf="state == 'done'"
+                    decoration-warning="state =='to_close'"
                     widget="badge" class="text-dark"
                 />
-
-                <field name="production_id" widget="many2one" options="{'no_open': False}"
-                    string="Order ID" />
-                <field name="product_id" />
                 <field name="product_qty" />
             </list>
         </field>
     </record>
 
-
     <!-- ACTION VIEW -->
     <record id="action_mrp_request_report" model="ir.actions.act_window.view">
         <field name="sequence" eval="1" />
         <field name="view_mode">list</field>
-        <field name="act_window_id" ref="mrp_request_report_action" />
-        <field name="view_id" ref="mrp_request_line_reporting_view_list" />
+        <field name="act_window_id" ref="mrp_request_reporting_action" />
+        <field name="view_id" ref="mrp_reporting_view_list" />
     </record>
-
 </odoo>
