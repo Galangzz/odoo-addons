@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_mrp_reporting">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.internal_layout">
+                    <div class="page">
+
+                        <t t-set="start" t-value="o.filter_start_date" />
+                        <t t-set="end" t-value="o.filter_end_date" />
+
+                        <t t-set="domain"
+                            t-value="[('date_start', '&gt;=', start), ('date_start', '&lt;=', end)]" />
+                        <t t-set="productions"
+                            t-value="o.env['mrp.production'].search(domain, order='production_group_id desc')" />
+                        <t t-set="products" t-value="productions.mapped('product_id')" />
+
+                        <div class="text-left">
+                            <h1>Laporan Siklus Produksi</h1>
+                            <p> Print Time: <span
+                                    t-out="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %I:%M:%S %p')" />
+                            </p>
+                            <p>Date start: <span
+                                    t-out="start.strftime('%d-%m-%Y') if start else '-'" />
+                            </p>
+                            <p>Date end: <span t-out="end.strftime('%d-%m-%Y') if end else '-'" />
+                            </p>
+                        </div>
+
+                        <table class="table table-bordered table-sm mt-4">
+                            <thead style="background-color: #F2FF00; ">
+                                <tr>
+                                    <th style="font-weight: bold; text-align: center;">Product</th>
+                                    <th style="font-weight: bold; text-align: center;">Manufacture
+                                        Request</th>
+                                    <th style="font-weight: bold; text-align: center;">Manufacture
+                                        Order</th>
+                                    <th style="font-weight: bold; text-align: center;">Manufacture
+                                        Date</th>
+                                    <th style="font-weight: bold; text-align: center;">Plan
+                                        Quantitiy</th>
+                                    <th style="font-weight: bold; text-align: center;">Produced
+                                        Quantitiy</th>
+                                    <th style="font-weight: bold; text-align: center;">Scrap
+                                        Quantitiy</th>
+                                    <th style="font-weight: bold; text-align: center;">Remaining
+                                        Quantitiy</th>
+                                    <th style="font-weight: bold; text-align: center;">Efisiensi</th>
+                                    <th style="font-weight: bold; text-align: center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-bordered">
+                                <t t-foreach="products" t-as="product">
+                                    <t t-set="lines"
+                                        t-value="productions.filtered(lambda l: l.product_id.id == product.id)" />
+                                    <tr style="background-color: #D9D9D9; font-weight: bold; ">
+                                        <td colspan="4">
+                                            <t t-out="product.name" /> [<t
+                                                t-out="product.default_code" />] </td>
+                                        <td style="text-align: center;">
+                                            <t t-out="sum(lines.mapped('product_qty'))" />
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <t t-out="sum(lines.mapped('qty_producing'))" />
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <t t-out="sum(lines.mapped('scrap_count'))" />
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <t t-out="sum(lines.mapped('remaining_qty'))" />
+                                        </td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <t t-foreach="lines" t-as="line">
+                                        <tr style="text-align: center; vertical-align: middle;">
+                                            <td></td>
+                                            <td style="width: 30%;">
+                                                <t t-if="line.request_id.name">
+                                                    <t t-out="line.request_id.name" />
+
+                                                </t>
+                                                <t t-else="" style="text-align: center;">
+                                                    <span>-</span>
+                                                </t>
+                                            </td>
+                                            <td style="width: 30%;">
+                                                <t t-out="line.name" />
+                                            </td>
+                                            <td>
+                                                <t t-out="line.date_start.strftime('%d-%m-%Y')" />
+                                            </td>
+                                            <td>
+                                                <t t-out="line.product_qty" />
+                                            </td>
+                                            <td>
+                                                <t t-out="line.qty_producing" />
+                                            </td>
+                                            <td>
+                                                <t t-out="line.scrap_count" />
+                                            </td>
+                                            <td>
+                                                <t t-out="line.remaining_qty" />
+                                            </td>
+                                            <t t-set="bg_color" t-value="'#FF0000'" />
+                                            <t t-if="line.efisiensi &gt;= 80">
+                                                <t t-set="bg_color" t-value="'#00FC32'" />
+                                            </t>
+                                            <t t-elif="line.efisiensi &gt;= 50">
+                                                <t t-set="bg_color" t-value="'#FFFF00'" />
+                                            </t>
+                                            <td t-attf-style="background-color: {{bg_color}};">
+                                                <t t-out="line.efisiensi" />% </td>
+                                            <td>
+                                                <t t-out="line.state.capitalize()" />
+                                            </td>
+                                        </tr>
+                                    </t>
+
+                                </t>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

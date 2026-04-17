@@ -188,8 +188,6 @@
                                     <field name="name" class="fw-bold" />
                                 </div>
                                 <field name="requested_id" readonly="True" />
-                                <!-- <field name="company_id" readonly="True" optional="hide" />
-                                <field name="date_assign" /> -->
                             </div>
                             <div
                                 class="col-6 d-flex flex-column align-items-end justify-content-start">

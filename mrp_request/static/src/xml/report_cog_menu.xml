@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <templates xml:space="preserve">
+    <t t-name="mrp_request.MrpReportCogItem">
+        <div role="menuitem" class="dropdown-item o_menu_item focus" t-on-click="_onClick">
+            <span class="o_menu_item_label">Print Summary Report</span>
+        </div>
+    </t>
+</templates>
+
+</odoo>

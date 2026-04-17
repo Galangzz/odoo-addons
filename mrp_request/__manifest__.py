@@ -11,7 +11,7 @@
     'website': "https://www.yourcompany.com",
 
     'category': 'Supply Chain/Manufacturing',
-    'version': '19.0.1.0.0',
+    'version': '0.1',
 
     'depends': [
         'base',
@@ -23,9 +23,12 @@
     'data': [
         'security/ir.model.access.csv',
         'data/mrp_request_sequence.xml',
+        'wizard/mrp_production_report_wizard.xml',
         'views/mrp_request_views.xml',
         'views/mrp_report_views.xml',
         'views/mrp_request_menus.xml',
+        'reports/mrp_report_pdf_template.xml',
+        'reports/mrp_report_pdf.xml',
     ],
     'installable': True,
     'application': True,

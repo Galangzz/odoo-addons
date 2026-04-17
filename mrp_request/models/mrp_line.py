@@ -63,7 +63,7 @@ class MrpRequestLine(models.Model):
                 line.production_id = self.env['mrp.production'].create({
                     'product_id': line.product_id.id,
                     'product_qty': line.product_qty,
-                    'product_uom_id': line.product_uom_id.id,
+                    'uom_id': line.product_uom_id.id,
                     'date_start': fields.Datetime.now(),
                     'origin': line.request_id.name,
                     'request_id': line.request_id.id,
