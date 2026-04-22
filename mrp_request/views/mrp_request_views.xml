@@ -203,7 +203,6 @@
                                         decoration-warning="state =='on_work'"
                                         optional="show" widget="badge" class="fw-bold" />
                                 </div>
-
                             </div>
                         </div>
                     </t>

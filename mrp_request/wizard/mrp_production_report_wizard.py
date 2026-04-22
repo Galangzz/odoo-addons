@@ -7,8 +7,8 @@ class MrpProductionReportWizard(models.TransientModel):
     _name = 'mrp.production.report.wizard'
     _description = 'MRP Production Report Wizard'
     
-    filter_start_date = fields.Datetime('Filter STart Date', default=datetime.now().strftime('%Y-%m-%d'), required=True)
-    filter_end_date = fields.Datetime('Filter End Date', default=datetime.now().strftime('%Y-%m-%d'), required=True)
+    filter_start_date = fields.Date('Filter STart Date', default=datetime.now().strftime('%Y-%m-%d'), required=True)
+    filter_end_date = fields.Date('Filter End Date', default=datetime.now().strftime('%Y-%m-%d'), required=True)
     
     format_report = fields.Selection(
         [

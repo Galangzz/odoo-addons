@@ -3,7 +3,7 @@ from odoo.tools.translate import _
 import logging
 from odoo.exceptions import UserError, AccessDenied
 from odoo.fields import Domain, Command
-from odoo.tools.misc import OrderedSet, format_date, groupby as tools_groupby, topological_sort
+from odoo.tools.misc import OrderedSet, groupby as tools_groupby, topological_sort
 
 
 _logger = logging.getLogger(__name__)

@@ -13,7 +13,8 @@ class MrpRequestOrderReport(models.Model):
             if rec.qty_producing == 0.0:
                 rec.efisiensi = 0
             else:
-                rec.efisiensi =  rec.qty_producing / rec.product_qty * 100
+                calculatted_efisiensi =  rec.qty_producing / rec.product_qty * 100
+                rec.efisiensi =  round(calculatted_efisiensi, 2)
 
     
     request_id = fields.Many2one('mrp.request.request', string='Request', ondelete='cascade', copy=False, readonly=True, store=True)

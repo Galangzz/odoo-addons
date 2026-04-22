@@ -1,12 +1,117 @@
 from datetime import datetime
-from odoo import http
+from odoo import http, fields
 from odoo.http import request
+from odoo.exceptions import ValidationError
 import xlsxwriter
 import io
+import logging
+
+_logger = logging.getLogger(__name__)
 
 XLSX_TITLE_HEADER = 'Laporan Siklus Produksi'
-
+STATE_MRP = ['draft', 'confirmed', 'progress', 'to_close', 'done', 'cancel']
 class MrpRequest(http.Controller):
+    @http.route('/api/odoo/report/manufacturing-order', type='http', auth='user', methods=['POST'], csrf=False)
+    def get_product_data_by_date(self):
+        
+        payload = request.get_json_data()
+        _logger.info("Payload is %s", payload)
+        
+        company_id = payload.get('company_id') or False
+        product_id = payload.get('product_id') or False
+        date_start = payload.get('date_start') or False
+        date_end = payload.get('date_end') or False
+        limit = payload.get('limit') or False
+        offset = payload.get('offset') or False
+        state = payload.get('state') or False
+        
+        if not date_start or not date_end:
+            return request.make_json_response(
+                status=400,
+                data={
+                    'status': 400,
+                    'success': False,
+                    'error': f'{ValidationError.__name__}',
+                    'message': f"{'date_start' if not date_start else 'date_end'} is required"
+                }
+            )
+        
+        format_date_start = datetime.strptime(date_start, '%Y-%m-%d').strftime('%Y-%m-%d 00:00:00')
+        format_date_end = datetime.strptime(date_end, '%Y-%m-%d').strftime('%Y-%m-%d 23:59:59')
+
+        company_id_val = int(company_id) if company_id else None
+        product_id_val = int(product_id) if product_id else None
+        limit_val = int(limit) if limit else None
+        offset_val = int(offset) if offset else None
+        
+        domain = []
+
+        if  company_id_val :
+            domain.append(('company_id', '=', company_id_val))
+        if  product_id_val:
+            domain.append(('product_id', '=', product_id_val))
+        if date_start:
+            domain.append(('date_start', '>=', format_date_start))
+        if date_end:
+            domain.append(('date_start', '<=', format_date_end))
+        if state:
+            if state not in STATE_MRP:            
+                return request.make_json_response(
+                    status=400,
+                    data={
+                        'status': 400,
+                        'success': False,
+                        'error': f'{ValidationError.__name__}: {state} is not a valid state',
+                        'message': f"Valid states are [{', '.join(STATE_MRP)}]"
+                    }
+                )
+            domain.append(('state', '=', state))
+        
+        
+        production = request.env['mrp.production'].search_read(
+            domain, 
+            [
+                'product_id',
+                'request_id',
+                'name',
+                'product_qty',
+                'qty_producing',
+                'scrap_count',
+                'remaining_qty',
+                'efisiensi',
+                'state'
+            ],
+            order='production_group_id desc', 
+            limit=limit_val, 
+            offset=offset_val
+        )
+        _logger.info("Production is %s", production)
+        
+        formatted_data =[]
+        
+        for prod in production:
+            formatted_data.append({
+                'product': prod['product_id'][1] if prod.get('product_id') else '',
+                'request': prod['request_id'][1] if prod.get('request_id') else '',
+                'order': prod.get('name'),
+                'plan_qty': prod.get('product_qty', 0.0),
+                'produced_qty': prod.get('qty_producing', 0.0),
+                'scrap_qty': prod.get('scrap_count', 0.0),
+                'remaining_qty': prod.get('remaining_qty', 0.0),
+                'efisiensi': f"{prod.get('efisiensi', 0.0)} %",
+                'state': prod.get('state') ,
+            })
+        return request.make_json_response(
+            status=200,
+            data={
+                'status': 200,
+                'success': True,
+                'count': len(production),
+                'data': formatted_data
+            },
+        )
+
+
     
     @http.route('/mrp_request/report/mrp_production/<start>/<end>', type='http', auth='user')
     def get_mrp_report_xls(self, start, end, **kwargs):
@@ -14,8 +119,8 @@ class MrpRequest(http.Controller):
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
         sheet = workbook.add_worksheet('Mrp Request Report')
 
-        format_start_date = datetime.strptime(start, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y')
-        format_end_date = datetime.strptime(end, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y')
+        format_start_date = datetime.strptime(start, '%Y-%m-%d').strftime('%d-%m-%Y')
+        format_end_date = datetime.strptime(end, '%Y-%m-%d').strftime('%d-%m-%Y')
         
         domain = [
             ('date_start', '>=', start),
@@ -95,7 +200,7 @@ class MrpRequest(http.Controller):
 
         sheet.write(row, 0, XLSX_TITLE_HEADER, title_header_style)
         row += 1
-        sheet.write(row, 0, f'Print Time: {datetime.now().strftime("%d-%m-%Y %I:%M:%S %p")}')
+        sheet.write(row, 0, f'Print Time: {fields.Datetime.context_timestamp(self, fields.Datetime.now()).strftime("%d-%m-%Y %I:%M:%S %p")} [{request.env.user.tz or "UTC"}]')
         row += 1
         sheet.write(row, 0, f'Date Start: {format_start_date}')
         row += 1
@@ -158,7 +263,7 @@ class MrpRequest(http.Controller):
         workbook.close()
         output.seek(0)
                 
-        file_name = f"Laporan_Produksi_{format_start_date}_ke_{format_end_date}.xlsx"
+        file_name = f"MRP_Production_Cycle_Report_{format_start_date}_to_{format_end_date}.xlsx"
         return request.make_response(
             output.read(),
             headers=[

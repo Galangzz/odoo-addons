@@ -17,13 +17,13 @@
     <record id="action_report_mrp_production" model="ir.actions.report">
         <field name="name">Manufacturing Reportings</field>
         <field name="model">mrp.production.report.wizard</field>
-        <field name="report_type">qweb-pdf</field>
+        <field name="report_type">qweb-html</field>
         <field name="report_name">mrp_request.report_mrp_reporting</field>
         <field name="report_file">mrp_request.report_mrp_reporting</field>
-        <field name="print_report_name">'Laporan Siklus Produksi'</field>
+        <field name="print_report_name">'MRP_Production_Cycle_Report_%s_to_%s' % (object.filter_start_date.strftime('%d-%m-%Y') if object.filter_start_date else 'Start', object.filter_end_date.strftime('%d-%m-%Y') if object.filter_end_date else 'End')</field>
         <field name="binding_model_id" ref="model_mrp_production" />
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="mrp_request.paperformat_mrp_landscape"/>
-    </record>
+    </record>   
 
 </odoo>

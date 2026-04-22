@@ -79,7 +79,6 @@
                                             <td style="width: 30%;">
                                                 <t t-if="line.request_id.name">
                                                     <t t-out="line.request_id.name" />
-
                                                 </t>
                                                 <t t-else="" style="text-align: center;">
                                                     <span>-</span>
@@ -117,9 +116,7 @@
                                             </td>
                                         </tr>
                                     </t>
-
                                 </t>
-
                             </tbody>
                         </table>
                     </div>
