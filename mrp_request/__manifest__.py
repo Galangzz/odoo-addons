@@ -8,7 +8,7 @@
     """,
 
     'author': "Galang Krisna",
-    'website': "https://www.yourcompany.com",
+    'website': "https://youtu.be/dQw4w9WgXcQ?si=KoKTE880vsYW9bUb",
 
     'category': 'Supply Chain/Manufacturing',
     'version': '0.1',

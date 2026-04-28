@@ -2,6 +2,8 @@ from datetime import datetime
 from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import ValidationError
+from odoo.addons.mrp_request.controllers.validation import ValidationController, ValidationResponseError #type: ignore
+from odoo.addons.mrp_request.controllers.error_handler import error_handler #type: ignore
 import xlsxwriter
 import io
 import logging
@@ -9,71 +11,49 @@ import logging
 _logger = logging.getLogger(__name__)
 
 XLSX_TITLE_HEADER = 'Laporan Siklus Produksi'
-STATE_MRP = ['draft', 'confirmed', 'progress', 'to_close', 'done', 'cancel']
 class MrpRequest(http.Controller):
     @http.route('/api/odoo/report/manufacturing-order', type='http', auth='user', methods=['POST'], csrf=False)
+    @error_handler
     def get_product_data_by_date(self):
-        
+            
         payload = request.get_json_data()
-        _logger.info("Payload is %s", payload)
-        
-        company_id = payload.get('company_id') or False
-        product_id = payload.get('product_id') or False
-        date_start = payload.get('date_start') or False
-        date_end = payload.get('date_end') or False
-        limit = payload.get('limit') or False
-        offset = payload.get('offset') or False
-        state = payload.get('state') or False
-        
-        if not date_start or not date_end:
-            return request.make_json_response(
-                status=400,
-                data={
-                    'status': 400,
-                    'success': False,
-                    'error': f'{ValidationError.__name__}',
-                    'message': f"{'date_start' if not date_start else 'date_end'} is required"
-                }
-            )
-        
-        format_date_start = datetime.strptime(date_start, '%Y-%m-%d').strftime('%Y-%m-%d 00:00:00')
-        format_date_end = datetime.strptime(date_end, '%Y-%m-%d').strftime('%Y-%m-%d 23:59:59')
-
-        company_id_val = int(company_id) if company_id else None
-        product_id_val = int(product_id) if product_id else None
-        limit_val = int(limit) if limit else None
-        offset_val = int(offset) if offset else None
+        0
+        validator = ValidationController()
+        data = validator.sanitize_payload_report_manufacturing_order(payload)    
+            
+        company_id = data.get('company_id') or False
+        product_id = data.get('product_id') or False
+        date_start = data.get('date_start') or False
+        date_end = data.get('date_end') or False
+        limit = data.get('limit') or False
+        offset = data.get('offset') or False
+        state = data.get('state') or False
         
         domain = []
 
-        if  company_id_val :
-            domain.append(('company_id', '=', company_id_val))
-        if  product_id_val:
-            domain.append(('product_id', '=', product_id_val))
+        if  company_id :
+            if not self.is_company_id(company_id):
+                return self.return_report_manufacturing_order_data_empty(date_start, date_end)
+            domain.append(('company_id', '=', company_id))
+        if  product_id :
+            if not self.is_product_id(product_id):
+                return self.return_report_manufacturing_order_data_empty(date_start, date_end)
+            domain.append(('product_id', '=', product_id))
         if date_start:
-            domain.append(('date_start', '>=', format_date_start))
+            domain.append(('date_start', '>=', date_start))
         if date_end:
-            domain.append(('date_start', '<=', format_date_end))
+            domain.append(('date_start', '<=', date_end))
         if state:
-            if state not in STATE_MRP:            
-                return request.make_json_response(
-                    status=400,
-                    data={
-                        'status': 400,
-                        'success': False,
-                        'error': f'{ValidationError.__name__}: {state} is not a valid state',
-                        'message': f"Valid states are [{', '.join(STATE_MRP)}]"
-                    }
-                )
             domain.append(('state', '=', state))
         
-        
+        total_data = request.env['mrp.production'].search_count(domain)
         production = request.env['mrp.production'].search_read(
             domain, 
             [
                 'product_id',
                 'request_id',
                 'name',
+                'date_start',
                 'product_qty',
                 'qty_producing',
                 'scrap_count',
@@ -82,8 +62,8 @@ class MrpRequest(http.Controller):
                 'state'
             ],
             order='production_group_id desc', 
-            limit=limit_val, 
-            offset=offset_val
+            limit=limit, 
+            offset=offset
         )
         _logger.info("Production is %s", production)
         
@@ -94,6 +74,7 @@ class MrpRequest(http.Controller):
                 'product': prod['product_id'][1] if prod.get('product_id') else '',
                 'request': prod['request_id'][1] if prod.get('request_id') else '',
                 'order': prod.get('name'),
+                'date_start': prod.get('date_start'),
                 'plan_qty': prod.get('product_qty', 0.0),
                 'produced_qty': prod.get('qty_producing', 0.0),
                 'scrap_qty': prod.get('scrap_count', 0.0),
@@ -101,14 +82,18 @@ class MrpRequest(http.Controller):
                 'efisiensi': f"{prod.get('efisiensi', 0.0)} %",
                 'state': prod.get('state') ,
             })
+
         return request.make_json_response(
             status=200,
             data={
                 'status': 200,
                 'success': True,
+                'date_start': date_start,
+                'date_end': date_end,
+                'total': total_data,
                 'count': len(production),
                 'data': formatted_data
-            },
+            }
         )
 
 
@@ -271,3 +256,28 @@ class MrpRequest(http.Controller):
                 ('Content-Disposition', f'attachment; filename={file_name};')
             ]
         )
+        
+        
+    def is_company_id(self, company_id):
+        company = self.env['res.company'].sudo().search_count([('id', '=', company_id)])
+        return company >= 1
+        
+    def is_product_id(self, product_id):
+        product = self.env['product.product'].sudo().search_count([('id', '=', product_id)])
+        return product >= 1
+        
+    def return_report_manufacturing_order_data_empty(self, date_start, date_end):
+        return request.make_json_response(
+            status=200,
+            data={
+                'status': 200,
+                'success': True,
+                'date_start': date_start,
+                'date_end': date_end,
+                'total': 0,
+                'count': 0,
+                'data': []
+            }
+        )
+        
+        

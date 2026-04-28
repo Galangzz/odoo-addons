@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <record id="view_currency_form_inherit_currency" model="ir.ui.view">
+        <field name="name">res.currency.view.form.inherit</field>
+        <field name="model">res.currency</field>
+        <field name="inherit_id" ref="base.view_currency_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//form//sheet//notebook" position="before">
+                <group>
+                    <group groups="base.group_no_one">
+                        <group string="Price Accuracy">
+                            <field name="rounding" />
+                            <field name="decimal_places" />
+                        </group>
+                    </group>
+                    <group name="fetch-currency" string="Fetch"
+                        invisible="is_current_company_currency or not is_company_idr_id">
+                        <field name="from_date" />
+                        <field name="to_date" />
+                        <button string="GET" name="fetch_currency_bi" type="object"
+                            class="oe_highlight" />
+                    </group>
+                </group>
+            </xpath>
+
+            <xpath expr="//group[@groups='base.group_no_one']" position="replace" />
+        </field>
+    </record>
+
+
+</odoo>
