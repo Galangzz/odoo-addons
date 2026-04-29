@@ -11,8 +11,12 @@ _logger = logging.getLogger(__name__)
 class CurrencyFetch(models.Model):
     _inherit = 'res.currency'
 
-    from_date = fields.Date('From Date', required=True, store=True, default='_compute_start_date')
-    to_date = fields.Date('To Date', required=True, store=True, default=datetime.now().strftime('%Y-%m-%d'))
+    def _get_default_from_date(self):
+        return fields.Date.today() - timedelta(days=7)
+
+
+    from_date = fields.Date('From Date', required=True, default=_get_default_from_date)
+    to_date = fields.Date('To Date', required=True, default=fields.Date.context_today)
     is_company_idr_id = fields.Boolean(compute='_compute_is_company_idr_id')
     
     
@@ -20,7 +24,7 @@ class CurrencyFetch(models.Model):
     def _compute_is_company_idr_id(self):
         for currency in self:
             _logger.info("Company ID: %s", self.env.company.currency_id)
-            currency.is_company_idr_id = self.env.company.currency_id.id == 12 #IDR
+            currency.is_company_idr_id = self.env.company.currency_id.name == 'IDR'
 
     @api.constrains('from_date', 'to_date')
     def _check_date_range(self):
@@ -28,7 +32,7 @@ class CurrencyFetch(models.Model):
             if rec.to_date < rec.from_date:
                 raise ValidationError(_('To Date must be greater than From Date'))
     
-    def fetch_currency_bi(self, *args, **kwargs):
+    def fetch_currency_bi(self):
         
         if not self._compute_is_company_idr_id:
             return
@@ -39,7 +43,6 @@ class CurrencyFetch(models.Model):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/237.84.2.178 Safari/537.36'
         }
         for rec in self:
-
             params = {
                 'mts': rec.name,
                 'startdate': rec.from_date,
@@ -66,16 +69,60 @@ class CurrencyFetch(models.Model):
                         'name': table.findtext('tgl_subkurslokal').split('T')[0]
                     }
                     data_kurs.append(item)
+                if len(data_kurs) == 0:
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': _('Info'),
+                            'message': _('Data not found'),
+                            'sticky': False,
+                            'type': 'info', 
+                        }
+                    }
                     
-                self.env['res.currency.rate'].create(data_kurs)
+                sanitize_data = self._sanitize_data_create(datas=data_kurs)
+                if len(sanitize_data) == 0:
+                    return {
+                        'type': 'ir.actions.client',
+                        'tag': 'display_notification',
+                        'params': {
+                            'title': _('Info'),
+                            'message': _('Data already exists'),
+                            'sticky': False,
+                            'type': 'info', 
+                        }
+                    }
+
+                self.env['res.currency.rate'].create(sanitize_data)
+                return {
+                    'type': 'ir.actions.client',
+                        'tag': 'reload',
+                        'params': {
+                            'title': _('Success'),
+                            'message': _('Data fetched successfully'),
+                            'sticky': False,
+                            'type': 'success', 
+                        }
+                    }
             except Exception as e:
                 if isinstance(e, requests.exceptions.RequestException):
                     _logger.error(e.response)
                     raise ValidationError(_('Failed to fetch currency from BI'))
                 else:
                     _logger.error(e)
-    
+
     @api.depends('from_date', 'to_date')
     def _compute_start_date(self):
         for record in self:
             record.from_date =  record.to_date - timedelta(days=7)
+            
+    @api.model
+    def _sanitize_data_create(self, datas):
+        sanitize_data = []
+        for data in datas:
+            if self.env['res.currency.rate'].search([('name', '=', data['name']), ('currency_id', '=', data['currency_id'])]):
+                continue
+            else:
+                sanitize_data.append(data)
+        return sanitize_data

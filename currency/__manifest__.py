@@ -10,10 +10,10 @@
     'author': "Galang Krisna P",
     'website': "",
 
-    'category': 'Supply Chain/Inventory',
+    'category': 'Unauthorized',
     'version': '0.1',
 
-    'depends': ['base'],
+    'depends': ['base', 'account'],
 
     'data': [
         'views/currency_fetch_view.xml',
@@ -21,6 +21,11 @@
     
     'installable': True,
     'application': True,
-   
+        'assets': {
+        'web.assets_backend': [
+            'web/static/src/xml/**/*',
+        ],
+    },
+    'license': 'AGPL-3',
 }
 

@@ -20,7 +20,8 @@
                         <field name="from_date" />
                         <field name="to_date" />
                         <button string="GET" name="fetch_currency_bi" type="object"
-                            class="oe_highlight" />
+                            class="oe_highlight" icon="fa-regular fa-refresh"/>
+                       
                     </group>
                 </group>
             </xpath>
